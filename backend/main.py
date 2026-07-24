@@ -31,6 +31,9 @@ class AskResponse(BaseModel):
     subject: str
     explanation: str
     quiz_question: str
+@app.get("/")
+async def root():
+    return {"message": "Homework Helper API is running successfully!"}
 
 @app.post("/ask", response_model=AskResponse)
 async def ask_question(request: AskRequest):
