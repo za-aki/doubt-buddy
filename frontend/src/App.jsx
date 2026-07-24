@@ -16,7 +16,7 @@ function App() {
     setError(null)
     setResult(null)
 
-    const apiUrl = 'https://doubt-buddy.onrender.com'
+    const apiUrl = 'https://doubt-buddy.onrender.com' || 'http://localhost:8000'
 
     try {
       const response = await fetch(`${apiUrl}/ask`, {
