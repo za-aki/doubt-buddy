@@ -16,7 +16,7 @@ function App() {
     setError(null)
     setResult(null)
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+    const apiUrl = 'https://doubt-buddy.onrender.com'
 
     try {
       const response = await fetch(`${apiUrl}/ask`, {
