@@ -1,8 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
-
 # Import the compiled LangGraph agent from your agent.py file
 from agent import agent
 
@@ -12,7 +14,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS for all origins
+# Rate Limiter
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Enable CORS for known origins only
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://doubt-buddy-tau.vercel.app",
@@ -33,28 +40,30 @@ class AskResponse(BaseModel):
     subject: str
     explanation: str
     quiz_question: str
+
 @app.get("/")
 async def root():
     return {"message": "Homework Helper API is running successfully!"}
 
 @app.post("/ask", response_model=AskResponse)
-async def ask_question(request: AskRequest):
+@limiter.limit("5/minute")
+async def ask_question(request: Request, payload: AskRequest):
     try:
         # Invoke the compiled LangGraph agent
         # Passing initial state to the graph
         result = agent.invoke({
-            "question": request.question,
-            "language": request.language,
+            "question": payload.question,
+            "language": payload.language,
             "retry_count": 0
         })
-        
+
         # Return only the requested fields
         return AskResponse(
             subject=result.get("subject", "Unknown"),
             explanation=result.get("explanation", "Could not generate an explanation."),
             quiz_question=result.get("quiz_question", "No follow-up question available.")
         )
-        
+
     except Exception as e:
         # Catch errors from Groq API or graph execution
         raise HTTPException(status_code=500, detail=f"Agent execution failed: {str(e)}")
