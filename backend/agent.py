@@ -16,7 +16,7 @@ if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY not found. Check your .env file.")
 
 llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
+    model="openai/gpt-oss-120b",
     api_key=GROQ_API_KEY,
     temperature=0.2
 )
